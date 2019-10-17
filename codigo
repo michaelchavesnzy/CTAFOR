@@ -1,0 +1,51 @@
+from pandas import DataFrame
+import pandas as pd
+import numpy as np
+from dbfread import DBF, FieldParser, InvalidValue
+import os
+
+path = r"C:\Users\MICHAEL\Desktop\CTAFOR\Dados_Anuais_Scoot_todas_as_variaveis\Dados Transcoot_todos os links 2013"
+file = os.listdir(os.path.join(path))
+files = []
+
+for f in file:
+    if f.endswith('.xls'):
+        files.append(f)
+        
+dicionario={}
+
+class MyFieldParser(FieldParser):
+    def parse(self, field, data):
+        try:
+            return FieldParser.parse(self, field, data)
+        except ValueError:
+            return InvalidValue(data)
+
+for f1 in files:
+    print(f1)
+    dbf = DBF(f1, parserclass=MyFieldParser)
+    for i, record in enumerate(dbf):
+        for name, value in record.items():
+            if isinstance(value, InvalidValue):
+                print('records[{}][{!r}] == {!r}'.format(i, name, value))
+
+    frame_global = DataFrame(iter(dbf))
+    di={}
+  
+
+    for i in range(np.shape(frame_global['FLOW_M'].tolist())[0]):  
+        if i%10000==0  : 
+              print(i)
+        di[frame_global['DATA'][i],frame_global['HORA_I'][i]]=frame_global['FLOW_M'][i]
+    dicionario[f1]=di
+    
+    
+panda = pd.DataFrame(dicionario) 
+panda = panda.sort_index(level = 0)  
+panda.sum(axis=1)  #fluxo total de 745 sensores a cada 15 min todo o dia no ano inteiro
+panda.sum(axis=1).plot()    
+
+
+panda.to_pickle("./testedummy.pkl")
+panda = pd.read_pickle("./testedummy.pkl")
+os.remove("./dummy.pkl")
