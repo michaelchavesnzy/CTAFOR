@@ -1,0 +1,51 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Oct 19 18:38:52 2019
+
+@author: MICHAEL
+"""
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+panda = pd.read_pickle("C:/Users/MICHAEL/Desktop/CTAFOR/Dados_Anuais_Scoot_todas_as_variaveis/Dados Transcoot_todos os links 2016/dataframe2016.pkl")
+panda_media = panda.mean(axis = 1)
+
+
+import datetime as dt
+inicio=dt.date(2016, 1, 1)
+fim=dt.date(2016, 12, 31)
+
+
+tab=[]
+for i in range(0,(fim-inicio).days, 7):
+    tab.append(str("{:%Y%m%d}".format(inicio + dt.timedelta(days=i))))
+
+mat=[]
+for i in tab:
+    try:
+        mat.append(panda_media[i].values)
+    except KeyError:
+        print("A seguinte data ", i, "não tem nos dados")
+
+    
+
+for i in range(len(mat)):
+    nans = []
+    if len(mat[i]) != 96:
+        
+        dif = 96 - len(mat[i])
+        for j in range(dif):
+            nans.append(np.nan)
+    mat[i] = np.append(mat[i], nans)
+        
+
+shapes = []
+for i in range(len(mat)):
+    shapes.append(mat[i].shape)
+           
+plt.plot(np.nanmean(np.stack(mat),axis=0), linewidth = 2)
+
+plt.plot(np.nanmedian(np.stack(mat),axis=0))
+
+plt.plot(np.mean(np.stack(mat),axis=0))
