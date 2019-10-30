@@ -1,51 +1,81 @@
-from pandas import DataFrame
+
+# perfil dias da semana (todos os anos)
+
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Oct 19 18:38:52 2019
+
+@author: MICHAEL
+"""
 import pandas as pd
 import numpy as np
-from dbfread import DBF, FieldParser, InvalidValue
-import os
+import matplotlib.pyplot as plt
 
-path = r"C:\Users\MICHAEL\Desktop\CTAFOR\Dados_Anuais_Scoot_todas_as_variaveis\Dados Transcoot_todos os links 2013"
-file = os.listdir(os.path.join(path))
-files = []
+panda = pd.read_pickle("C:/Users/MICHAEL/Desktop/CTAFOR/Dados_Anuais_Scoot_todas_as_variaveis/Dados Transcoot_todos os links 2016/dataframe2016.pkl")
+panda_media = panda.mean(axis = 1)
 
-for f in file:
-    if f.endswith('.xls'):
-        files.append(f)
+
+import datetime as dt
+inicio=dt.date(2016, 1, 4)
+fim=dt.date(2016, 12, 31)
+
+
+tab=[]
+for i in range(0,(fim-inicio).days, 7):
+    tab.append(str("{:%Y%m%d}".format(inicio + dt.timedelta(days=i))))
+
+mat=[]
+for i in tab:
+    try:
+        mat.append(panda_media[i].values)
+    except KeyError:
+        print("A seguinte data ", i, "não tem nos dados")
+
+    
+
+for i in range(len(mat)):
+    nans = []
+    if len(mat[i]) != 96:
         
-dicionario={}
+        dif = 96 - len(mat[i])
+        for j in range(dif):
+            nans.append(np.nan)
+    mat[i] = np.append(mat[i], nans)
+        
 
-class MyFieldParser(FieldParser):
-    def parse(self, field, data):
-        try:
-            return FieldParser.parse(self, field, data)
-        except ValueError:
-            return InvalidValue(data)
+shapes = []
+for i in range(len(mat)):
+    shapes.append(mat[i].shape)
+           
+plt.plot(np.nanmean(np.stack(mat),axis=0), linewidth = 2)
 
-for f1 in files:
-    print(f1)
-    dbf = DBF(f1, parserclass=MyFieldParser)
-    for i, record in enumerate(dbf):
-        for name, value in record.items():
-            if isinstance(value, InvalidValue):
-                print('records[{}][{!r}] == {!r}'.format(i, name, value))
+plt.plot(np.nanmedian(np.stack(mat),axis=0))
 
-    frame_global = DataFrame(iter(dbf))
-    di={}
-  
-
-    for i in range(np.shape(frame_global['FLOW_M'].tolist())[0]):  
-        if i%10000==0  : 
-              print(i)
-        di[frame_global['DATA'][i],frame_global['HORA_I'][i]]=frame_global['FLOW_M'][i]
-    dicionario[f1]=di
-    
-    
-panda = pd.DataFrame(dicionario) 
-panda = panda.sort_index(level = 0)  
-panda.sum(axis=1)  #fluxo total de 745 sensores a cada 15 min todo o dia no ano inteiro
-panda.sum(axis=1).plot()    
+plt.plot(np.mean(np.stack(mat),axis=0))
 
 
-panda.to_pickle("./testedummy.pkl")
-panda = pd.read_pickle("./testedummy.pkl")
-os.remove("./dummy.pkl")
+
+
+
+#
+#import datetime as dt
+#inicio=dt.date(2016, 1, 1)
+#fim=dt.date(2016, 12, 31)
+#
+#
+#tab=[]
+#for i in range(0,(fim-inicio).days, 7):
+#    tab.append(str("{:%Y%m%d}".format(inicio + dt.timedelta(days=i))))
+#
+#mat=[]
+#for i in tab:
+#    mat.append(panda_media[i].values)
+#    
+#plt.plot(np.mean(np.stack(mat),axis=0))
+#    
+#import matplotlib.pyplot as plt
+#
+#shapes = []
+#for i in range(len(mat)):
+#    shapes.append(mat[i].shape)
+#    
